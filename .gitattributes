@@ -1,0 +1,13 @@
+# Jupyter notebooks — strip outputs on commit
+*.ipynb     filter=nbstripout
+*.ipynb     diff=nbstripout
+
+# Exclude from archives
+.ipynb_checkpoints/     export-ignore
+.venv/                  export-ignore
+__pycache__/            export-ignore
+*.py[cod]               export-ignore
+.env                    export-ignore
+.DS_Store               export-ignore
+data/                   export-ignore
+logs/                   export-ignore
