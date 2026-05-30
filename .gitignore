@@ -30,3 +30,6 @@ Thumbs.db
 # IDE
 .vscode/
 *.png
+
+# initial build reference:
+setup.md
