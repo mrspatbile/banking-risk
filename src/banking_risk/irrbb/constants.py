@@ -10,33 +10,6 @@ Reference: EBA/RTS/2022/10 (IRRBB Supervisory Outlier Tests)
 from enum import StrEnum
 
 
-# ────────────────────────────────────────────────────────────────────────────
-# FRTB constants and parameters used across modules.
-# ────────────────────────────────────────────────────────────────────────────#------------------------------------------------
-
-_GIRR_NODES = [
-    ("0.25Y",  0.25),
-    ("0.5Y",   0.5),
-    ("1Y",     1.0),
-    ("2Y",     2.0),
-    ("3Y",     3.0),
-    ("5Y",     5.0),
-    ("10Y",   10.0),
-    ("15Y",   15.0),
-    ("20Y",   20.0),
-    ("30Y",   30.0),
-]
-
-FRTB_GIRR_LABELS  : list[str]   = [n[0] for n in _GIRR_NODES]
-FRTB_GIRR_VERTICES: list[float] = [n[1] for n in _GIRR_NODES]
-
-
-
-# ────────────────────────────────────────────────────────────────────────────
-# IRRBB constants and parameters used across modules.
-# ────────────────────────────────────────────────────────────────────────────#------------------------------------------------
-
-
 # ── EBA 19 maturity buckets ──────────────────────────────────────────────────
 # EBA/RTS/2022/10, Annex III — boundaries in years (20 boundaries = 19 buckets)
 
