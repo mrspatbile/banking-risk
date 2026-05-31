@@ -8,7 +8,7 @@ with the SOT outlier flag.
 Reference: EBA/RTS/2022/10, Art. 8
 """
 
-from __future__ import annotations
+
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
