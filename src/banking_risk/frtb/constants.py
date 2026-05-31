@@ -29,5 +29,24 @@ FRTB_GIRR_VERTICES     : list[float] = [n[1] for n in _GIRR_NODES]
 FRTB_GIRR_RISK_WEIGHTS : list[float] = [n[2] for n in _GIRR_NODES]  # bps
 
 GIRR_CORRELATION_ALPHA   : float = 0.03   # within-bucket decay — CRR3 Art. 325bf
-GIRR_CROSS_BUCKET_GAMMA  : float = 0.50   # cross-currency correlation — CRR3 Art. 325bf
+GIRR_CROSS_BUCKET_GAMMA  : float = 0.50 
+
+
+# ── GIRR Vega vertices ────────────────────────────────────────────────────────
+# CRR3 Art. 325bd — option expiry and underlying tenor nodes
+
+_VEGA_NODES = [
+    ("0.5Y",  0.5),
+    ("1Y",    1.0),
+    ("3Y",    3.0),
+    ("5Y",    5.0),
+    ("10Y",  10.0),
+]
+
+GIRR_VEGA_LABELS  : list[str]   = [n[0] for n in _VEGA_NODES]
+GIRR_VEGA_VERTICES: list[float] = [n[1] for n in _VEGA_NODES]
+
+GIRR_VEGA_RISK_WEIGHT: float = 0.004   # 0.4% flat — CRR3 Art. 325bd
+GIRR_VEGA_ALPHA      : float = 0.01    # correlation decay — CRR3 Art. 325bf
+  # cross-currency correlation — CRR3 Art. 325bf
 
