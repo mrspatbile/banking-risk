@@ -51,7 +51,11 @@ assert len(EBA_BUCKET_MIDPOINTS) == 19
 # floor(t) = max(shocked_rate, -150bps + 3bps × t_years)
 
 POST_SHOCK_FLOOR_INTERCEPT: float = -0.0150   # -150 bps
-POST_SHOCK_FLOOR_SLOPE: float = 0.0003        # 3 bps per year
+POST_SHOCK_FLOOR_SLOPE: float      =  0.0003  # 3 bps per year
+
+# Maturity beyond which the short-end weight w(t) reaches zero.
+# EBA/RTS/2022/10, Annex III — used in steepener, flattener, short rate shocks.
+SHOCK_WEIGHT_CUTOFF_YEARS: float = 20.0
 
 # ── Supervisory Outlier Test thresholds ──────────────────────────────────────
 # EBA/RTS/2022/10, Art. 6 (EVE) and Art. 8 (NII)
