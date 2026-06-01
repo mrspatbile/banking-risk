@@ -37,7 +37,7 @@ class Asset_Class(StrEnum):
 
 # Default HQLA level per asset class (None = not HQLA eligible)
 HQLA_ELIGIBILITY: dict[Asset_Class, str | None] = {
-    Asset_Class.CASH:           "1",
+    Asset_Class.CASH:          "1",
     Asset_Class.CENTRAL_BANK:  "1",
     Asset_Class.GOVT_BOND:     "1",
     Asset_Class.COVERED_BOND:  "2A",
