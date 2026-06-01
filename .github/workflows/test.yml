@@ -18,6 +18,11 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: Install quant-risk-engine
+        run: |
+          git clone https://github.com/mrspatbile/quant-risk-engine.git ../quant-risk-engine
+          pip install -e ../quant-risk-engine
+
       - name: Install dependencies
         run: pip install -e .[dev]
 
