@@ -40,6 +40,7 @@ import matplotlib.pyplot as plt
 
 from banking_risk.shared.curves import Zero_Curve
 from banking_risk.frtb.portfolio import Trading_Portfolio
+from banking_risk.frtb.sensitivity_engine import FRTB_Sensitivity_Engine
 from banking_risk.frtb.vertex_mapping import GIRR_VEGA_VERTICES
 
 # ── GIRR calculators ──────────────────────────────────────────────────────────
@@ -223,15 +224,15 @@ class FRTB_SA:
     # ── Internal orchestration ────────────────────────────────────────────────
 
     def _compute(self) -> None:
-        p = self._portfolio
-        c = self._curve
+        engine = FRTB_Sensitivity_Engine(self._portfolio, self._curve)
         n_vega = len(GIRR_VEGA_VERTICES)
 
         # ── GIRR ──────────────────────────────────────────────────────────────
-        girr_delta = SA_GIRR_Calculator().compute(
-            p.girr_delta_sensitivities(c)
-        )
-        girr_vega_flat = p.girr_vega_sensitivities(c)
+        girr_delta_sens = engine.girr_delta()
+        girr_delta = SA_GIRR_Calculator().compute(girr_delta_sens) \
+            if girr_delta_sens else None
+
+        girr_vega_flat = engine.girr_vega()
         girr_vega = SA_GIRR_Vega_Calculator().compute(
             {ccy: arr.reshape(n_vega, n_vega)
              for ccy, arr in girr_vega_flat.items()}
@@ -240,24 +241,24 @@ class FRTB_SA:
         self._girr = Risk_Class_View(
             delta=girr_delta,
             vega=girr_vega,
-            curvature=None,   # requires gamma from quant-risk-engine
+            curvature=None,   # requires QRE-2 + QRE-3
         )
 
         # ── CSR ───────────────────────────────────────────────────────────────
-        csr_delta_sens = p.csr_sensitivities(c)
+        csr_delta_sens = engine.csr_delta()
         csr_delta = SA_CSR_Delta_Calculator().compute(csr_delta_sens) \
             if csr_delta_sens else None
 
         self._csr = Risk_Class_View(
             delta=csr_delta,
-            vega=None,        # requires csr_vega_sensitivities on portfolio
+            vega=None,
             curvature=None,
         )
 
         # ── Equity ────────────────────────────────────────────────────────────
-        eq_bucketed = p.equity_bucketed_sensitivities(c)
-        eq_delta = SA_Equity_Delta_Calculator().compute(eq_bucketed) \
-            if eq_bucketed else None
+        eq_delta_sens = engine.equity_delta()
+        eq_delta = SA_Equity_Delta_Calculator().compute(eq_delta_sens) \
+            if eq_delta_sens else None
 
         self._equity = Risk_Class_View(
             delta=eq_delta,
@@ -266,9 +267,9 @@ class FRTB_SA:
         )
 
         # ── FX ────────────────────────────────────────────────────────────────
-        fx_sens  = p.fx_sensitivities(c)
-        fx_delta = SA_FX_Delta_Calculator().compute(fx_sens) \
-            if fx_sens else None
+        fx_delta_sens = engine.fx_delta()
+        fx_delta = SA_FX_Delta_Calculator().compute(fx_delta_sens) \
+            if fx_delta_sens else None
 
         self._fx = Risk_Class_View(
             delta=fx_delta,
@@ -277,13 +278,13 @@ class FRTB_SA:
         )
 
         # ── Commodity ─────────────────────────────────────────────────────────
-        comm_sens  = p.commodity_sensitivities(c)
-        comm_delta = SA_Commodity_Delta_Calculator().compute(comm_sens) \
-            if comm_sens else None
+        comm_delta_sens = engine.commodity_delta()
+        comm_delta = SA_Commodity_Delta_Calculator().compute(comm_delta_sens) \
+            if comm_delta_sens else None
 
         self._commodity = Risk_Class_View(
             delta=comm_delta,
-            vega=None,   # no vega in CRR3 SA for commodity
+            vega=None,
             curvature=None,
         )
 
