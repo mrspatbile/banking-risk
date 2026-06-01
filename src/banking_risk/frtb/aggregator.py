@@ -74,7 +74,7 @@ class FRTB_SA_Result:
         return sum(c.total for c in self.components) + self.drc + self.rrao
 
     def to_table(self) -> pd.DataFrame:
-        """Risk class × measure capital breakdown table."""
+        """Risk class × measure capital breakdown table, including DRC and RRAO."""
         rows = []
         for c in self.components:
             rows.append({
@@ -82,8 +82,34 @@ class FRTB_SA_Result:
                 "delta"     : c.delta,
                 "vega"      : c.vega,
                 "curvature" : c.curvature,
+                "drc"       : 0.0,
+                "rrao"      : 0.0,
                 "total"     : c.total,
             })
+
+        # Add DRC and RRAO rows if present
+        if self.drc > 0.0:
+            rows.append({
+                "risk_class": "DRC",
+                "delta"     : 0.0,
+                "vega"      : 0.0,
+                "curvature" : 0.0,
+                "drc"       : self.drc,
+                "rrao"      : 0.0,
+                "total"     : self.drc,
+            })
+
+        if self.rrao > 0.0:
+            rows.append({
+                "risk_class": "RRAO",
+                "delta"     : 0.0,
+                "vega"      : 0.0,
+                "curvature" : 0.0,
+                "drc"       : 0.0,
+                "rrao"      : self.rrao,
+                "total"     : self.rrao,
+            })
+
         df = pd.DataFrame(rows).set_index("risk_class")
 
         # Summary row
@@ -92,6 +118,8 @@ class FRTB_SA_Result:
             "delta"     : df["delta"].sum(),
             "vega"      : df["vega"].sum(),
             "curvature" : df["curvature"].sum(),
+            "drc"       : df["drc"].sum(),
+            "rrao"      : df["rrao"].sum(),
             "total"     : self.total,
         }]).set_index("risk_class")
 

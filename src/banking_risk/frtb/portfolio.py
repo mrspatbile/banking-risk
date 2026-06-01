@@ -115,6 +115,13 @@ class Trading_Instrument:
         instruments to compute vega and curvature sensitivities. Must match
         the asset class — equity vol surface for equity options, rate vol
         cube for swaptions, FX vol surface for FX options, etc.
+    lgd : float | None
+        Loss given default for credit instruments. Used by DRC_Calculator
+        to compute jump-to-default capital per CRR3 Art. 325w.
+        Decimal (e.g., 0.4 = 40%). Required for CSR instruments.
+    is_exotic : bool
+        Residual risk classification for RRAO. True = exotic underlying (1% charge).
+        False = other residual risk (0.1% charge). Used by RRAO_Calculator.
     """
 
     name             : str
@@ -130,6 +137,8 @@ class Trading_Instrument:
     issuer           : str | None = None   # legal entity — used for concentration risk
     underlying       : str | None = None   # underlying ticker / identifier (options only)
     vol_surface      : Any | None = None   # QRE Vol_Surface — required for vega/curvature
+    lgd              : float | None = None # loss given default for DRC (CRR3 Art. 228–230)
+    is_exotic        : bool       = False  # residual risk category for RRAO (1% vs 0.1%)
 
     def __post_init__(self) -> None:
         self.risk_classes = frozenset(

@@ -31,7 +31,28 @@ from dataclasses import dataclass
 
 @dataclass
 class Capital_Stack:
-    """Regulatory capital and ratios."""
+    """Regulatory capital and ratios.
+
+    Attributes
+    ----------
+    cet1, tier1, tier2 : float
+        Capital amounts
+    total_capital : float
+        Sum of all capital tiers
+    frtb_rwa, credit_rwa, oprisk_rwa : float
+        Risk-weighted assets by pillar 1 component
+    total_rwa : float
+        Sum of all RWA components
+    cet1_ratio, tier1_ratio, total_ratio : float
+        Capital ratios vs. total RWA
+    sa_ccr_ead : float, optional
+        SA-CCR exposure at default (before RWA conversion)
+    cva_capital : float, optional
+        BA-CVA capital charge
+    ccb, ccyb, gsii_buffer : float
+        Buffer rates for MDA trigger calculation
+    """
+
     cet1: float
     tier1: float
     tier2: float
@@ -45,6 +66,9 @@ class Capital_Stack:
     cet1_ratio: float
     tier1_ratio: float
     total_ratio: float
+
+    sa_ccr_ead: float = 0.0  # Exposure at default (optional detail)
+    cva_capital: float = 0.0  # CVA capital charge (part of pillar 1)
 
     ccb: float = 0.025  # Fixed 2.5%
     ccyb: float = 0.0   # Jurisdiction-specific, 0–2.5%
@@ -85,6 +109,8 @@ class Capital_Stack_Builder:
         frtb_rwa: float,
         credit_rwa: float,
         oprisk_rwa: float,
+        sa_ccr_ead: float = 0.0,
+        cva_capital: float = 0.0,
         ccb: float = 0.025,
         ccyb: float = 0.0,
         gsii_buffer: float = 0.0,
@@ -104,6 +130,10 @@ class Capital_Stack_Builder:
             Credit risk IRB/SA RWA
         oprisk_rwa : float
             Operational risk SMA RWA
+        sa_ccr_ead : float, optional
+            SA-CCR exposure at default (for detail; not directly RWA)
+        cva_capital : float, optional
+            BA-CVA capital charge (part of pillar 1)
         ccb : float, optional
             Countercyclical buffer (default 2.5%)
         ccyb : float, optional
@@ -137,6 +167,8 @@ class Capital_Stack_Builder:
             cet1_ratio=cet1_ratio,
             tier1_ratio=tier1_ratio,
             total_ratio=total_ratio,
+            sa_ccr_ead=sa_ccr_ead,
+            cva_capital=cva_capital,
             ccb=ccb,
             ccyb=ccyb,
             gsii_buffer=gsii_buffer,
