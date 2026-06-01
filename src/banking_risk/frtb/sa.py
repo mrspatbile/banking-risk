@@ -264,10 +264,14 @@ class FRTB_SA:
         eq_delta = SA_Equity_Delta_Calculator().compute(eq_delta_sens) \
             if eq_delta_sens else None
 
+        eq_vega_sens = engine.equity_vega()
+        eq_vega = SA_Equity_Vega_Calculator().compute(eq_vega_sens) \
+            if eq_vega_sens else None
+
         self._equity = Risk_Class_View(
             delta=eq_delta,
-            vega=None,
-            curvature=None,
+            vega=eq_vega,
+            curvature=None,   # needs QRE: VanillaOption.price(curve, spot=...)
         )
 
         # ── FX ────────────────────────────────────────────────────────────────
@@ -275,10 +279,14 @@ class FRTB_SA:
         fx_delta = SA_FX_Delta_Calculator().compute(fx_delta_sens) \
             if fx_delta_sens else None
 
+        fx_vega_sens = engine.fx_vega()
+        fx_vega = SA_FX_Vega_Calculator().compute(fx_vega_sens) \
+            if fx_vega_sens else None
+
         self._fx = Risk_Class_View(
             delta=fx_delta,
-            vega=None,
-            curvature=None,
+            vega=fx_vega,
+            curvature=None,   # needs QRE: FXForward.price(curve, spot=...)
         )
 
         # ── Commodity ─────────────────────────────────────────────────────────
@@ -296,9 +304,9 @@ class FRTB_SA:
         components = [
             Risk_Class_Capital(
                 "GIRR",
-                delta=self._girr.delta.capital if self._girr.delta else 0.0,
-                vega=self._girr.vega.capital   if self._girr.vega else 0.0,
-                curvature=0.0,
+                delta=self._girr.delta.capital         if self._girr.delta     else 0.0,
+                vega=self._girr.vega.capital           if self._girr.vega      else 0.0,
+                curvature=self._girr.curvature.capital if self._girr.curvature else 0.0,
             ),
             Risk_Class_Capital(
                 "CSR",
@@ -309,13 +317,13 @@ class FRTB_SA:
             Risk_Class_Capital(
                 "equity",
                 delta=self._equity.delta.capital if self._equity.delta else 0.0,
-                vega=0.0,
+                vega=self._equity.vega.capital   if self._equity.vega  else 0.0,
                 curvature=0.0,
             ),
             Risk_Class_Capital(
                 "FX",
                 delta=self._fx.delta.capital if self._fx.delta else 0.0,
-                vega=0.0,
+                vega=self._fx.vega.capital   if self._fx.vega  else 0.0,
                 curvature=0.0,
             ),
             Risk_Class_Capital(

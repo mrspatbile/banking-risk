@@ -8,9 +8,10 @@ shape each SA calculator expects.
 
 QRE dependencies
 ----------------
-Delta  : rate_sensitivities(), cs01(), delta(), npv() — available now.
-Vega   : requires QRE-1 (VanillaOption.price(curve, sigma=...)).
-Curvature: requires QRE-2 (ArrayCurve.bumped_at) + QRE-3 (instrument.npv()).
+Delta     : rate_sensitivities(), cs01(), delta(), npv() — available now.
+Vega      : VanillaOption.price(curve, sigma=...) — available now.
+Curvature : ArrayCurve.bumped_at() + instrument.npv() — available now (GIRR).
+            Equity/FX/CSR curvature pending spot/spread bump overrides in QRE.
 
 References
 ----------
@@ -146,7 +147,6 @@ class FRTB_Sensitivity_Engine:
         """Vega on 5×5 expiry×tenor grid per currency — dict[str, ndarray(25,)].
 
         Non-linear instruments only (is_linear=False).
-        Requires QRE-1: VanillaOption.price(curve, sigma=...).
         """
         n = len(GIRR_VEGA_VERTICES)
         result: dict[str, np.ndarray] = {}
@@ -164,7 +164,7 @@ class FRTB_Sensitivity_Engine:
     def equity_vega(self) -> dict[int, np.ndarray]:
         """Vega at 5 expiry vertices per equity bucket — dict[int, ndarray(5,)].
 
-        Non-linear instruments only. Requires QRE-1.
+        Non-linear instruments only.
         """
         n = len(FRTB_EQUITY_VEGA_VERTICES)
         result: dict[int, np.ndarray] = {}
@@ -182,7 +182,7 @@ class FRTB_Sensitivity_Engine:
     def fx_vega(self) -> dict[str, np.ndarray]:
         """Vega at 5 expiry vertices per currency pair — dict[str, ndarray(5,)].
 
-        Non-linear instruments only. Requires QRE-1.
+        Non-linear instruments only.
         """
         n = len(FRTB_FX_VEGA_VERTICES)
         result: dict[str, np.ndarray] = {}
@@ -257,7 +257,7 @@ class FRTB_Sensitivity_Engine:
         return float(ti.instrument.delta(self._curve))
 
     def _vega(self, ti: Trading_Instrument) -> float:
-        """Vega via sigma bump — requires QRE-1."""
+        """Vega via sigma bump."""
         sigma = (
             getattr(ti.instrument, '_sigma', None)
             or getattr(ti.instrument, 'sigma', None)

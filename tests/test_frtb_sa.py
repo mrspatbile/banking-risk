@@ -146,9 +146,9 @@ def test_commodity_has_no_vega():
     assert frtb.commodity.vega is None
 
 
-def test_curvature_not_yet_computed():
+def test_curvature_csr_equity_fx_not_yet_computed():
     frtb = FRTB_SA(_empty_portfolio(), _mock_curve())
-    assert frtb.girr.curvature     is None
+    # GIRR curvature is wired. Others need spot/spread bump in QRE.
     assert frtb.csr.curvature      is None
     assert frtb.equity.curvature   is None
     assert frtb.fx.curvature       is None
