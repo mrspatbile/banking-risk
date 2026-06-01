@@ -255,14 +255,7 @@ class FRTB_SA:
         )
 
         # ── Equity ────────────────────────────────────────────────────────────
-        eq_sens = p.equity_sensitivities(c)
-        # equity_sensitivities returns dict[str, float] (name → sensitivity)
-        # SA_Equity_Delta_Calculator expects dict[int, list[float]] (bucket → names)
-        # bucket assignment requires instrument metadata — pass through as bucket 11
-        # (residual) until instruments carry bucket information
-        eq_bucketed: dict[int, list[float]] = {}
-        for name, s in eq_sens.items():
-            eq_bucketed.setdefault(11, []).append(s)
+        eq_bucketed = p.equity_bucketed_sensitivities(c)
         eq_delta = SA_Equity_Delta_Calculator().compute(eq_bucketed) \
             if eq_bucketed else None
 

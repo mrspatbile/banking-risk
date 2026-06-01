@@ -18,6 +18,7 @@ def _mock_portfolio():
     p.girr_vega_sensitivities = Mock(return_value={})
     p.csr_sensitivities = Mock(return_value={})
     p.equity_sensitivities = Mock(return_value={})
+    p.equity_bucketed_sensitivities = Mock(return_value={})
     p.fx_sensitivities = Mock(return_value={})
     p.commodity_sensitivities = Mock(return_value={})
     return p
@@ -167,7 +168,7 @@ def test_frtb_sa_calls_all_sensitivity_methods():
     p.girr_delta_sensitivities.assert_called_once_with(c)
     p.girr_vega_sensitivities.assert_called_once_with(c)
     p.csr_sensitivities.assert_called_once_with(c)
-    p.equity_sensitivities.assert_called_once_with(c)
+    p.equity_bucketed_sensitivities.assert_called_once_with(c)
     p.fx_sensitivities.assert_called_once_with(c)
     p.commodity_sensitivities.assert_called_once_with(c)
 

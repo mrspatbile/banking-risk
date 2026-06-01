@@ -83,12 +83,53 @@ class Trading_Instrument:
         for delta risk classes, and:
           vega_grid(curve, expiry_vertices, tenor_vertices) → dict[tuple, float]
         for vega risk classes (once the QRE vega grid API is available).
+    is_linear : bool
+        True for instruments with no optionality — bonds, swaps, forwards,
+        futures, plain stocks. Contributes delta only.
+        False for instruments with embedded optionality — vanilla options,
+        callables, structured products. Contributes delta, vega, and curvature.
+        vol_surface must be provided when is_linear=False.
+    is_long : bool
+        Direction of the position. True = long, False = short. Callers are
+        responsible for applying the sign when aggregating net sensitivities.
+    equity_bucket : int | None
+        CRR3 Art. 325bk equity bucket (1–11). Required for equity instruments.
+        1–4: large cap emerging markets. 5–8: large cap developed markets.
+        9–10: small cap. 11: residual / other.
+    csr_bucket : int | None
+        CRR3 Art. 325bh CSR non-sec bucket (1–18). Required for CSR instruments.
+    commodity_bucket : int | None
+        CRR3 Art. 325bp commodity bucket (1–11). Required for commodity instruments.
+    ccy_pair : str | None
+        ISO pair code e.g. 'EURUSD'. Required for FX instruments.
+    issuer : str | None
+        Legal entity name of the issuer or counterparty. Used for concentration
+        risk and single-name exposure limits.
+    underlying : str | None
+        Ticker or identifier of the underlying asset for derivatives.
+        e.g. 'AAPL', 'SPX', 'EURUSD', 'Brent'. Required for non-linear
+        instruments so QRE can retrieve the correct vol surface if not
+        explicitly provided.
+    vol_surface : Any | None
+        QRE Vol_Surface object for the underlying. Required for non-linear
+        instruments to compute vega and curvature sensitivities. Must match
+        the asset class — equity vol surface for equity options, rate vol
+        cube for swaptions, FX vol surface for FX options, etc.
     """
 
-    name        : str
-    currency    : str
-    risk_classes: frozenset[FRTB_Risk_Class]
-    instrument  : Any
+    name             : str
+    currency         : str
+    risk_classes     : frozenset[FRTB_Risk_Class]
+    instrument       : Any
+    is_linear        : bool       = True
+    is_long          : bool       = True
+    equity_bucket    : int | None = None
+    csr_bucket       : int | None = None
+    commodity_bucket : int | None = None
+    ccy_pair         : str | None = None
+    issuer           : str | None = None   # legal entity — used for concentration risk
+    underlying       : str | None = None   # underlying ticker / identifier (options only)
+    vol_surface      : Any | None = None   # QRE Vol_Surface — required for vega/curvature
 
     def __post_init__(self) -> None:
         self.risk_classes = frozenset(
@@ -246,6 +287,7 @@ class Standard_Trading_Portfolio(Trading_Portfolio):
     def equity_sensitivities(
         self, curve: Zero_Curve
     ) -> dict[str, float]:
+        """Equity delta per instrument name (flat dict, no bucket info)."""
         result: dict[str, float] = {}
         for ti in self._instruments:
             if FRTB_Risk_Class.EQUITY not in ti.risk_classes:
@@ -253,17 +295,34 @@ class Standard_Trading_Portfolio(Trading_Portfolio):
             result[ti.name] = ti.instrument.delta(curve)
         return result
 
+    def equity_bucketed_sensitivities(
+        self, curve: Zero_Curve
+    ) -> dict[int, list[float]]:
+        """Equity delta keyed by CRR3 bucket — format expected by SA_Equity_Delta_Calculator.
+
+        Instruments without equity_bucket set fall into bucket 11 (residual).
+        """
+        result: dict[int, list[float]] = {}
+        for ti in self._instruments:
+            if FRTB_Risk_Class.EQUITY not in ti.risk_classes:
+                continue
+            bucket = ti.equity_bucket if ti.equity_bucket is not None else 11
+            result.setdefault(bucket, []).append(ti.instrument.delta(curve))
+        return result
+
     def fx_sensitivities(
         self, curve: Zero_Curve
     ) -> dict[str, float]:
+        """FX delta keyed by currency pair label."""
         result: dict[str, float] = {}
         for ti in self._instruments:
             if FRTB_Risk_Class.FX not in ti.risk_classes:
                 continue
-            result[ti.name] = ti.instrument.delta_fx(curve)
+            key = ti.ccy_pair if ti.ccy_pair is not None else ti.name
+            result[key] = ti.instrument.delta_fx(curve)
         return result
 
-    # ── Vega methods (requires QRE vega grid API) ─────────────────────────────
+    # ── Vega methods (non-linear instruments only, requires QRE vega grid API) ─
 
     def girr_vega_sensitivities(
         self, curve: Zero_Curve
@@ -314,7 +373,16 @@ class Standard_Trading_Portfolio(Trading_Portfolio):
         for ti in self._instruments:
             if risk_class not in ti.risk_classes:
                 continue
-            grid = ti.instrument.vega_grid(curve, expiry_vertices, expiry_vertices)
+            if ti.is_linear:
+                continue
+            if ti.vol_surface is None:
+                raise ValueError(
+                    f"Instrument '{ti.name}' is non-linear but has no vol_surface. "
+                    "Attach a QRE Vol_Surface before computing vega sensitivities."
+                )
+            grid = ti.instrument.vega_grid(
+                curve, expiry_vertices, expiry_vertices, ti.vol_surface
+            )
             arr = result.setdefault(ti.currency, np.zeros(n * n))
             for (ei, tj), v in grid.items():
                 i = expiry_vertices.index(ei)
