@@ -1,21 +1,45 @@
+![Python](https://img.shields.io/badge/Python-3.13-blue?logo=python&logoColor=white)
+![CRR3](https://img.shields.io/badge/Reg-CRR3-orange)
+![CRD](https://img.shields.io/badge/reg-CRD_VI-purple)
+![Tests](https://github.com/mrspatbile/banking-risk/actions/workflows/test.yml/badge.svg)
+![Tests passing](https://img.shields.io/badge/tests-462%20passing-brightgreen)
+
 # banking-risk
 
-Banking regulatory risk applications built on [quant-risk-engine](https://github.com/mrspatbile/quant-risk-engine).
 
-Covers IRRBB EVE/NII supervisory outlier tests, FRTB SA GIRR delta, CSRBB spread risk, and ICAAP credit risk components. All curve construction, instrument pricing, and model simulation lives in `quant-risk-engine`. This repo applies that infrastructure to regulatory and internal risk frameworks.
+This repository implements **regulatory risk frameworks** as executable logic, translating IRRBB, FRTB, CSRBB, and ICAAP requirements into computation, aggregation, decomposition, and reporting layers.
+
+All curve construction, instrument pricing, scenario simulation and risk sensitivities are delegated to [quant-risk-engine](https://github.com/mrspatbile/quant-risk-engine), which provides the underlying quantitative primitives used across regulatory models.
+
 
 ---
 
 ## Regulatory scope
 
-| Module | Regulation | Metric |
-|---|---|---|
-| `irrbb/eve.py` | EBA/RTS/2022/10 | EVE SOT — 15% Tier 1 threshold |
-| `irrbb/nii.py` | EBA/RTS/2022/10 | NII SOT — 5% Tier 1 threshold |
-| `irrbb/scenarios.py` | EBA/RTS/2022/10 | 6 EBA supervisory shock scenarios |
-| `frtb/girr.py` | CRR3 Art. 325 | SA GIRR delta risk charge |
-| `csrbb/spread_risk.py` | EBA/GL/2022/14 | Credit spread risk in the banking book |
-| `credit_risk/` | Internal / ICAAP | PD, LGD, EL |
+<small>
+
+| Module | Regulation |
+|---|---|
+
+
+| Module     | Regulatory reference                    |
+| ---------- | --------------------------------------- |
+| `irrbb/*`  | EBA/RTS/2022/10                         |
+| `csrbb/*`  | EBA/GL/2022/14                          |
+| `frtb/*`   | CRR3 Art. 325bb                         |
+| `lcr.py`   | CRR + DR 2015/61 + EBA/GL/2019/02 (reporting/outflow rates) |
+| `nsfr.py`  | CRR (Arts. 428a et seq.)                |
+| `ilaap.py` | EBA/GL/2021/01 + ECB ILAAP Guide |
+| `credit_risk/` |  CRR Art. 153 (IRB formula), Art. 163 (PD), Art. 228–230 (LGD)                   | 
+
+**Approach**: SA for FRTB and IRRBB. Implements CRR3 prescribed 
+vertex grids, risk class bucketing, within-bucket netting, 
+correlation matrices, and capital K/S computation. Regulatory features: curvature via full repricing, collateral haircut LGD, EVE/NII repricing gaps per EBA/RTS/2022/10.
+
+
+
+
+</small>
 
 ---
 
@@ -56,12 +80,6 @@ cp .env.example .env
 # add FRED_API_KEY to .env
 ```
 
-Activate notebook output stripping:
-
-```bash
-nbstripout --install
-```
-
 Verify:
 
 ```bash
@@ -72,52 +90,73 @@ pytest tests/ -v
 
 ## Notebooks
 
-Open from the project root with the venv active:
-
-```bash
-jupyter lab
-```
-
-Notebooks are numbered and must be run in order — each writes processed data to `data/processed/` for the next to consume.
+Notebooks illustrate usage of the features implemented in the package.
 
 ```
 notebooks/
-├── 01_yield_curves/
-│   ├── 01_nss_curves.ipynb        ECB NSS AAA and all-issuers curves
-│   └── 02_ois_bootstrap.ipynb     ESTR OIS curve bootstrap via QuantLib
-├── 02_irrbb/
-│   ├── 01_eve_sot.ipynb           EVE supervisory outlier test, 6 scenarios
-│   ├── 02_nii_sot.ipynb           NII supervisory outlier test
-│   └── 03_repricing_gap.ipynb     Repricing gap analysis
-├── 03_frtb/
-│   └── 01_girr_delta.ipynb        FRTB SA GIRR delta charge
-└── 04_icaap/
+01_irrbb.ipynb  
+02_frtb_girr.ipynb                  
+03_csrbb.ipynb       
+04_credit_risk.ipynb            
+05_liquidity_ratios.ipynb     
+06_liquidity_monitoring.ipynb
+07_frtb_sa.ipynb     
 ```
-
 ---
 
 ## Project layout
 
 ```
-src/banking_risk/
-├── config.py          Path constants, API keys, auto-create data dirs
-├── logging.py         Rotating file logger for the banking_risk namespace
-├── irrbb/
-│   ├── scenarios.py   EBA rate shock vectors (6 scenarios)
-│   ├── eve.py         EVE SOT calculation and outlier flag
-│   └── nii.py         NII SOT calculation and outlier flag
-├── frtb/
-│   └── girr.py        FRTB SA GIRR delta aggregation
-├── csrbb/
-│   └── spread_risk.py Credit spread sensitivity in the banking book
-├── credit_risk/
-│   ├── pd.py          Probability of default
-│   ├── lgd.py         Loss given default
-│   └── el.py          Expected loss: EL = PD × LGD × EAD
-└── utils/
-    └── style.py       Shared matplotlib/pandas style for notebooks
-```
+📁 src/banking_risk/
+│
+├── 📁 irrbb/
+│   ├── scenarios.py
+│   ├── nii.py
+│   ├── eve.py
+│   ├── gap.py
+│   ├── book.py
+│   └── constants.py
+│
+├── 📁 csrbb/
+│   └── spread_risk.py
+│
+├── 📁 frtb/
+│   ├── 📁 girr/       
+│   ├── 📁 commodity/  
+│   ├── 📁 csr/        
+│   ├── 📁 fx/         
+│   ├── 📁 equity/     
+│   ├── sensitivity_engine.py
+│   ├── sa.py
+│   ├── vertex_mapping.py
+│   ├── aggregator.py
+│   ├── constants.py
+│   └── portfolio.py
+│
+├── 📁 credit_risk/
+│   ├── pd.py
+│   ├── lgd.py
+│   └── el.py
+│
+├── 📁  liquidity/
+│   ├── collateral.py
+│   ├── funding_gap.py
+│   ├── intraday.py
+│   ├── nsfr.py
+│   ├── lcr.py
+│   ├── ilaap.py
+│   ├── stress.py
+│   └── ewi.py
+│
+├── 📁 shared/
+│   ├── curve_projection.py
+│   ├── curves.py
+│   └── dates.py
+│
+📁 tests/
+    └── test_*.py  (462 tests)
 
+ ```
 ---
 
 ## Tests
@@ -128,29 +167,3 @@ pytest tests/ -v
 
 CI runs on every push and pull request to `main` via GitHub Actions (`.github/workflows/test.yml`).
 
----
-
-## Data
-
-Raw and processed data are gitignored. The pipeline uses:
-
-- `data/cache/` — raw API responses (ECB SDW, FRED)
-- `data/processed/` — serialised curves and cashflow data (Parquet)
-
-Neither directory is committed. Run the yield curve notebooks first to populate `data/processed/` before running any IRRBB or FRTB notebooks.
-
----
-
-## Common errors
-
-**`ModuleNotFoundError: quant_risk`**
-Reinstall the editable dependency: `pip install -e ../quant-risk-engine`
-
-**`FileNotFoundError: No OIS curve file found in data/processed/`**
-Run `01_yield_curves/02_ois_bootstrap.ipynb` before any IRRBB notebook.
-
-**ECB API returns no data**
-The ECB SDW API has occasional downtime. Retry after a few minutes.
-
-**`ValueError: No data available on or before ...`**
-Increase `last_n` in the `NSSCurve.from_ecb` call or re-run the NSS notebook to fetch fresh data.
