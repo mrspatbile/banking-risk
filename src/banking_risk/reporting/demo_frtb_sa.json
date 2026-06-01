@@ -1,0 +1,42 @@
+{
+  "components": [
+    {
+      "name": "GIRR",
+      "delta": 1000.0,
+      "vega": 100.0,
+      "curvature": 50.0
+    },
+    {
+      "name": "CSR-nonsec",
+      "delta": 800.0,
+      "vega": 50.0,
+      "curvature": 30.0
+    },
+    {
+      "name": "CSR-sec",
+      "delta": 200.0,
+      "vega": 20.0,
+      "curvature": 10.0
+    },
+    {
+      "name": "Equity",
+      "delta": 5000.0,
+      "vega": 500.0,
+      "curvature": 200.0
+    },
+    {
+      "name": "FX",
+      "delta": 300.0,
+      "vega": 30.0,
+      "curvature": 10.0
+    },
+    {
+      "name": "Commodity",
+      "delta": 400.0,
+      "vega": 40.0,
+      "curvature": 20.0
+    }
+  ],
+  "drc": 100.0,
+  "rrao": 50.0
+}
