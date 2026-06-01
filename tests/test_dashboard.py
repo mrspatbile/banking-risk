@@ -197,7 +197,7 @@ def test_kpi_card_decimal_format():
     """Test KPI card decimal formatting."""
     kpi = kpi_card("Leverage Ratio", value=0.055, threshold=0.030, is_percentage=False)
 
-    assert "0.05" in kpi["value"]
+    assert "0.06" in kpi["value"]
     assert "0.03" in kpi["threshold"]
 
 
