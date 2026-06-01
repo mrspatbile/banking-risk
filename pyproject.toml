@@ -29,6 +29,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest", "pytest-cov"]
+dashboard = ["streamlit>=1.28", "plotly"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

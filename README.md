@@ -2,7 +2,7 @@
 ![CRR3](https://img.shields.io/badge/Reg-CRR3-orange)
 ![CRD](https://img.shields.io/badge/reg-CRD_VI-purple)
 ![Tests](https://github.com/mrspatbile/banking-risk/actions/workflows/test.yml/badge.svg)
-![Tests passing](https://img.shields.io/badge/tests-462%20passing-brightgreen)
+![Tests passing](https://img.shields.io/badge/tests-564%20passing-brightgreen)
 
 # banking-risk
 
@@ -93,8 +93,42 @@ notebooks/
 04_credit_risk.ipynb            
 05_liquidity_ratios.ipynb     
 06_liquidity_monitoring.ipynb
-07_frtb_sa.ipynb     
+07_frtb_sa.ipynb
+08_capital_adequacy.ipynb
 ```
+
+---
+
+## Interactive Dashboards
+
+Run the Streamlit dashboard to visualize regulatory capital and risk metrics:
+
+```bash
+streamlit run banking_risk_dashboard.py
+```
+
+Opens interactive dashboards in your browser at `localhost:8501`.
+
+**Page 1: Capital Adequacy**
+
+![Capital Adequacy Dashboard](docs/screenshots/dashboard_capital_adequacy.png)
+
+- MDA trigger gauge and distance-to-breach (bps)
+- Capital ratios (CET1, Tier1, Total) vs. regulatory minimums
+- Regulatory compliance traffic lights
+- Stress test outcomes (baseline vs. adverse vs. severely adverse)
+
+**Page 2: FRTB SA**
+
+![FRTB SA Dashboard](docs/screenshots/dashboard_frtb_sa.png)
+
+- Risk class capital breakdown (GIRR, CSR, Equity, FX, Commodity)
+- Capital composition by measure (delta, vega, curvature, DRC, RRAO)
+- Comprehensive Risk Measure (CRM) total
+- Drill-down by risk class and bucket
+
+Upload your `Capital_Stack.json` and `FRTB_SA_Result.json` to generate live dashboards.
+
 ---
 
 ## Project layout
@@ -146,8 +180,16 @@ notebooks/
 │   ├── curves.py
 │   └── dates.py
 │
+├── 📁 reporting/
+│   ├── dashboard.py
+│   ├── charts.py
+│   └── __init__.py
+│
+├── 📁 utils/
+│   └── reporting.py
+│
 📁 tests/
-    └── test_*.py  (462 tests)
+    └── test_*.py  (564 tests)
 
  ```
 ---
