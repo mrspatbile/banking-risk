@@ -1,32 +1,22 @@
 {
-  "cet1": 500.0,
-  "tier1": 600.0,
-  "tier2": 200.0,
-  "total_capital": 1300.0,
-  "frtb_rwa": 5000.0,
-  "credit_rwa": 3000.0,
-  "oprisk_rwa": 1000.0,
-  "total_rwa": 9000.0,
+  "cet1": 500000000,
+  "tier1": 600000000,
+  "tier2": 200000000,
+  "total_capital": 1300000000,
+  "frtb_rwa": 5000000000,
+  "credit_rwa": 3000000000,
+  "oprisk_rwa": 1000000000,
+  "total_rwa": 9000000000,
   "cet1_ratio": 0.0956,
   "tier1_ratio": 0.1144,
   "total_ratio": 0.1556,
-  "sa_ccr_ead": 500.0,
-  "cva_capital": 50.0,
+  "leverage_ratio": 0.0445,
   "ccb": 0.025,
   "ccyb": 0.0,
   "gsii_buffer": 0.015,
   "stress_scenarios": {
-    "baseline": {
-      "cet1_ratio": 0.0956,
-      "capital": 500.0
-    },
-    "adverse": {
-      "cet1_ratio": 0.0825,
-      "capital": 450.0
-    },
-    "severely_adverse": {
-      "cet1_ratio": 0.0650,
-      "capital": 400.0
-    }
+    "Baseline":          {"cet1_ratio": 0.0956},
+    "Adverse":           {"cet1_ratio": 0.0825},
+    "Severely Adverse":  {"cet1_ratio": 0.0650}
   }
 }
