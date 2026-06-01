@@ -33,6 +33,7 @@ def test_frtb_sa_empty_portfolio():
     assert frtb.total == pytest.approx(0.0)
     assert frtb.girr.capital == pytest.approx(0.0)
     assert frtb.csr.capital == pytest.approx(0.0)
+    assert frtb.csr_sec.capital == pytest.approx(0.0)
     assert frtb.equity.capital == pytest.approx(0.0)
     assert frtb.fx.capital == pytest.approx(0.0)
     assert frtb.commodity.capital == pytest.approx(0.0)
@@ -43,6 +44,7 @@ def test_frtb_sa_total_is_sum_of_components():
     components_sum = sum([
         frtb.girr.capital,
         frtb.csr.capital,
+        frtb.csr_sec.capital,
         frtb.equity.capital,
         frtb.fx.capital,
         frtb.commodity.capital,
@@ -81,7 +83,7 @@ def test_risk_class_view_all_none():
 def test_to_table_has_correct_shape():
     frtb  = FRTB_SA(_empty_portfolio(), _mock_curve())
     table = frtb.to_table()
-    assert len(table) == 6   # 5 risk classes + FRTB SA total
+    assert len(table) == 7   # 6 risk classes (incl. CSR non-sec and CSR sec) + FRTB SA total
     assert "delta"     in table.columns
     assert "vega"      in table.columns
     assert "curvature" in table.columns
@@ -150,6 +152,7 @@ def test_curvature_csr_equity_fx_not_yet_computed():
     frtb = FRTB_SA(_empty_portfolio(), _mock_curve())
     # GIRR curvature is wired. Others need spot/spread bump in QRE.
     assert frtb.csr.curvature      is None
+    assert frtb.csr_sec.curvature  is None
     assert frtb.equity.curvature   is None
     assert frtb.fx.curvature       is None
     assert frtb.commodity.curvature is None

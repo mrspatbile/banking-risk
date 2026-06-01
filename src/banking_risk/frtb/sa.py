@@ -53,6 +53,11 @@ from banking_risk.frtb.csr.delta     import SA_CSR_Delta_Calculator
 from banking_risk.frtb.csr.vega      import SA_CSR_Vega_Calculator
 from banking_risk.frtb.csr.curvature import SA_CSR_Curvature_Calculator
 
+# ── CSR Securitisation calculators ────────────────────────────────────────────
+from banking_risk.frtb.csr_sec.delta     import SA_CSR_Sec_Delta_Calculator
+from banking_risk.frtb.csr_sec.vega      import SA_CSR_Sec_Vega_Calculator
+from banking_risk.frtb.csr_sec.curvature import SA_CSR_Sec_Curvature_Calculator
+
 # ── Equity calculators ────────────────────────────────────────────────────────
 from banking_risk.frtb.equity.delta     import SA_Equity_Delta_Calculator
 from banking_risk.frtb.equity.vega      import SA_Equity_Vega_Calculator
@@ -65,10 +70,6 @@ from banking_risk.frtb.fx.curvature import SA_FX_Curvature_Calculator
 
 # ── Commodity calculator ──────────────────────────────────────────────────────
 from banking_risk.frtb.commodity.delta import SA_Commodity_Delta_Calculator
-
-# ── DRC and RRAO ─────────────────────────────────────────────────────────────
-from banking_risk.frtb.drc   import DRC_Calculator, DRC_Position, DRC_Result
-from banking_risk.frtb.rrao  import RRAO_Calculator, RRAO_Position, RRAO_Category
 
 # ── Aggregation dataclasses ───────────────────────────────────────────────────
 from banking_risk.frtb.aggregator import Risk_Class_Capital, FRTB_SA_Result
@@ -141,6 +142,10 @@ class FRTB_SA:
         return self._csr
 
     @property
+    def csr_sec(self) -> Risk_Class_View:
+        return self._csr_sec
+
+    @property
     def equity(self) -> Risk_Class_View:
         return self._equity
 
@@ -151,16 +156,6 @@ class FRTB_SA:
     @property
     def commodity(self) -> Risk_Class_View:
         return self._commodity
-
-    @property
-    def drc(self) -> DRC_Result:
-        """Default Risk Charge result."""
-        return self._drc
-
-    @property
-    def rrao(self):
-        """Residual Risk Add-On result."""
-        return self._rrao
 
     # ── Top-level results ─────────────────────────────────────────────────────
 
@@ -175,7 +170,7 @@ class FRTB_SA:
     # ── Reporting ─────────────────────────────────────────────────────────────
 
     def to_table(self) -> pd.DataFrame:
-        """Risk class × (delta / vega / curvature / total) capital table, plus DRC and RRAO."""
+        """Risk class × (delta / vega / curvature / total) capital table."""
         return self._result.to_table()
 
     def plot(self) -> None:
@@ -237,61 +232,6 @@ class FRTB_SA:
 
     # ── Internal orchestration ────────────────────────────────────────────────
 
-    def _build_drc_positions(self) -> list[DRC_Position]:
-        """Extract credit instruments and build DRC position list.
-
-        DRC applies to credit instruments in the trading book that have
-        default risk but are already captured by delta/vega/curvature
-        sensitivities. We extract instruments with CSR exposure and LGD
-        to compute jump-to-default capital.
-        """
-        positions: list[DRC_Position] = []
-        for inst in self._portfolio.instruments():
-            # DRC applies to credit instruments (CSR) with default risk
-            if not any(rc in inst.risk_classes for rc in [
-                "csr_non_sec", "csr_sec"
-            ]):
-                continue
-            if not hasattr(inst.instrument, 'mtm') or inst.instrument.mtm is None:
-                continue
-            if not hasattr(inst, 'lgd') or inst.lgd is None:
-                inst.lgd = 0.45  # Default LGD if not provided
-            bucket = getattr(inst, 'csr_bucket', 1)
-            positions.append(DRC_Position(
-                name=inst.name,
-                notional=getattr(inst.instrument, 'notional', 0.0),
-                lgd=inst.lgd,
-                mtm=inst.instrument.mtm,
-                bucket=bucket,
-                is_long=inst.is_long,
-            ))
-        return positions
-
-    def _build_rrao_positions(self) -> list[RRAO_Position]:
-        """Extract exotic/residual instruments and build RRAO position list.
-
-        RRAO applies to instruments with risk not captured by delta/vega/curvature:
-        - Exotic underlyings (longevity, weather, variance): 1.0%
-        - Other residual risk (gap, correlation, behavioural): 0.1%
-        """
-        positions: list[RRAO_Position] = []
-        for inst in self._portfolio.instruments():
-            # Check if instrument is marked as exotic or residual
-            is_exotic = getattr(inst, 'is_exotic', False)
-            if not is_exotic:
-                continue
-            notional = getattr(inst.instrument, 'notional', 0.0)
-            if notional <= 0:
-                continue
-            # Default to EXOTIC (1%) unless marked otherwise
-            category = getattr(inst, 'rrao_category', RRAO_Category.EXOTIC)
-            positions.append(RRAO_Position(
-                name=inst.name,
-                notional=notional,
-                category=category,
-            ))
-        return positions
-
     def _compute(self) -> None:
         engine = FRTB_Sensitivity_Engine(self._portfolio, self._curve)
         n_vega = len(GIRR_VEGA_VERTICES)
@@ -317,13 +257,24 @@ class FRTB_SA:
             curvature=girr_curv,
         )
 
-        # ── CSR ───────────────────────────────────────────────────────────────
-        csr_delta_sens = engine.csr_delta()
-        csr_delta = SA_CSR_Delta_Calculator().compute(csr_delta_sens) \
-            if csr_delta_sens else None
+        # ── CSR Non-Sec ──────────────────────────────────────────────────────────
+        csr_non_sec_delta_sens = engine.csr_non_sec_delta()
+        csr_delta = SA_CSR_Delta_Calculator().compute(csr_non_sec_delta_sens) \
+            if csr_non_sec_delta_sens else None
 
         self._csr = Risk_Class_View(
             delta=csr_delta,
+            vega=None,
+            curvature=None,
+        )
+
+        # ── CSR Securitisation ────────────────────────────────────────────────────
+        csr_sec_delta_sens = engine.csr_sec_delta()
+        csr_sec_delta = SA_CSR_Sec_Delta_Calculator().compute(csr_sec_delta_sens) \
+            if csr_sec_delta_sens else None
+
+        self._csr_sec = Risk_Class_View(
+            delta=csr_sec_delta,
             vega=None,
             curvature=None,
         )
@@ -369,14 +320,6 @@ class FRTB_SA:
             curvature=None,
         )
 
-        # ── DRC (Default Risk Charge) ─────────────────────────────────────────
-        drc_positions = self._build_drc_positions()
-        self._drc = DRC_Calculator().compute(drc_positions)
-
-        # ── RRAO (Residual Risk Add-On) ───────────────────────────────────────
-        rrao_positions = self._build_rrao_positions()
-        self._rrao = RRAO_Calculator().compute(rrao_positions)
-
         # ── Aggregate ─────────────────────────────────────────────────────────
         components = [
             Risk_Class_Capital(
@@ -386,8 +329,14 @@ class FRTB_SA:
                 curvature=self._girr.curvature.capital if self._girr.curvature else 0.0,
             ),
             Risk_Class_Capital(
-                "CSR",
+                "CSR non-sec",
                 delta=self._csr.delta.capital if self._csr.delta else 0.0,
+                vega=0.0,
+                curvature=0.0,
+            ),
+            Risk_Class_Capital(
+                "CSR sec",
+                delta=self._csr_sec.delta.capital if self._csr_sec.delta else 0.0,
                 vega=0.0,
                 curvature=0.0,
             ),
@@ -411,8 +360,4 @@ class FRTB_SA:
             ),
         ]
 
-        self._result = FRTB_SA_Result(
-            components=components,
-            drc=self._drc.capital,
-            rrao=self._rrao.capital,
-        )
+        self._result = FRTB_SA_Result(components=components)

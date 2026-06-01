@@ -107,6 +107,73 @@ CSR_VEGA_ALPHA       : float = 0.01    # correlation decay
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# CSR SECURITISATION — CRR3 Art. 325bi/bj / BCBS Table 8 (Securitisations)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# 41 buckets total:
+# - Buckets 1-25: Non-CTP buckets (senior/non-senior × RMBS/CMBS/ABS/CLO/other)
+# - Buckets 26-41: CTP buckets (index/bespoke × senior/mezzanine/junior)
+
+_CSR_SEC_BUCKETS = [
+    # Non-CTP buckets (senior)
+    ( 1, "RMBS — senior",                          0.020, 0.50),
+    ( 2, "RMBS — non-senior",                      0.030, 0.45),
+    ( 3, "CMBS — senior",                          0.025, 0.50),
+    ( 4, "CMBS — non-senior",                      0.035, 0.45),
+    ( 5, "ABS — senior",                           0.020, 0.50),
+    ( 6, "ABS — non-senior",                       0.030, 0.45),
+    ( 7, "CLO — senior",                           0.015, 0.50),
+    ( 8, "CLO — non-senior",                       0.025, 0.45),
+    ( 9, "Other sec — senior",                     0.020, 0.50),
+    (10, "Other sec — non-senior",                 0.030, 0.45),
+    # Additional granularity (buckets 11-25) for institutional securitisations
+    (11, "RMBS — AAA",                             0.015, 0.55),
+    (12, "RMBS — AA-A",                            0.025, 0.50),
+    (13, "RMBS — BBB",                             0.045, 0.40),
+    (14, "CMBS — AAA",                             0.020, 0.55),
+    (15, "CMBS — AA-A",                            0.030, 0.50),
+    (16, "CMBS — BBB",                             0.050, 0.40),
+    (17, "ABS — AAA",                              0.015, 0.55),
+    (18, "ABS — AA-A",                             0.025, 0.50),
+    (19, "ABS — BBB",                              0.045, 0.40),
+    (20, "CLO — AAA",                              0.012, 0.55),
+    (21, "CLO — AA-A",                             0.020, 0.50),
+    (22, "CLO — BBB",                              0.035, 0.40),
+    (23, "Other — AAA",                            0.015, 0.55),
+    (24, "Other — AA-A",                           0.025, 0.50),
+    (25, "Other — BBB",                            0.045, 0.40),
+    # CTP buckets (credit tranched products — indices and bespoke)
+    (26, "CTP index — senior",                     0.018, 0.50),
+    (27, "CTP index — mezzanine",                  0.030, 0.45),
+    (28, "CTP index — junior",                     0.035, 0.40),
+    (29, "CTP index — equity",                     0.050, 0.35),
+    (30, "CTP bespoke — senior",                   0.020, 0.50),
+    (31, "CTP bespoke — mezzanine",                0.032, 0.45),
+    (32, "CTP bespoke — junior",                   0.040, 0.40),
+    (33, "CTP bespoke — equity",                   0.060, 0.35),
+    (34, "CTP other index — senior",               0.018, 0.50),
+    (35, "CTP other index — mezzanine",            0.030, 0.45),
+    (36, "CTP other index — junior",               0.035, 0.40),
+    (37, "CTP other index — equity",               0.050, 0.35),
+    (38, "CTP other bespoke — senior",             0.020, 0.50),
+    (39, "CTP other bespoke — mezzanine",          0.032, 0.45),
+    (40, "CTP other bespoke — junior",             0.040, 0.40),
+    (41, "CTP other bespoke — equity",             0.060, 0.35),
+]
+
+CSR_SEC_BUCKET_LABELS  : list[str]   = [str(b[0]) for b in _CSR_SEC_BUCKETS]
+CSR_SEC_BUCKET_DESCS   : list[str]   = [b[1] for b in _CSR_SEC_BUCKETS]
+CSR_SEC_RISK_WEIGHTS   : list[float] = [b[2] for b in _CSR_SEC_BUCKETS]
+CSR_SEC_RHO_NAME       : list[float] = [b[3] for b in _CSR_SEC_BUCKETS]
+
+CSR_SEC_TENOR_ALPHA    : float = 0.05   # tenor correlation decay — CRR3 Art. 325bi
+CSR_SEC_CROSS_BUCKET_GAMMA: float = 0.05  # cross-bucket correlation — CRR3 Art. 325bj
+
+CSR_SEC_VEGA_RISK_WEIGHT : float = 0.004   # 0.4% — CRR3 Art. 325bd
+CSR_SEC_VEGA_ALPHA       : float = 0.01    # correlation decay
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # EQUITY — CRR3 Art. 325bk / BCBS Table 11
 # ═══════════════════════════════════════════════════════════════════════════════
 

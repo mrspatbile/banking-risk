@@ -448,7 +448,7 @@ class TestFRTBSAIntegration:
 
     def test_to_table_shape(self, mixed_portfolio, eur_curve):
         table = FRTB_SA(mixed_portfolio, eur_curve).to_table()
-        assert len(table) == 6          # 5 risk classes + total
+        assert len(table) == 7          # 6 risk classes (incl. CSR sec) + total
         assert table.index[-1] == 'FRTB SA'
         assert (table['total'] >= 0).all()
 

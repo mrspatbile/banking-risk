@@ -84,11 +84,46 @@ class FRTB_Sensitivity_Engine:
         return result
 
     def csr_delta(self) -> dict[int, np.ndarray]:
-        """CS01 at 5 CSR vertices per bucket — dict[int, ndarray(5,)]."""
+        """CS01 at 5 CSR vertices per bucket — dict[int, ndarray(5,)].
+
+        Aggregates both CSR_NON_SEC and CSR_SEC instruments.
+        """
         csr_classes = {FRTB_Risk_Class.CSR_NON_SEC, FRTB_Risk_Class.CSR_SEC}
         result: dict[int, np.ndarray] = {}
         for ti in self._portfolio.instruments():
             if not (ti.risk_classes & csr_classes):
+                continue
+            if ti.csr_bucket is None:
+                raise ValueError(
+                    f"Instrument '{ti.name}' has CSR risk class but no csr_bucket set."
+                )
+            sign = 1 if ti.is_long else -1
+            raw  = self._csr_sens(ti)
+            arr  = result.setdefault(ti.csr_bucket, np.zeros(len(FRTB_CSR_VERTICES)))
+            arr += sign * assign_to_bucket(raw, FRTB_CSR_VERTICES)
+        return result
+
+    def csr_non_sec_delta(self) -> dict[int, np.ndarray]:
+        """CS01 at 5 CSR vertices per bucket — CSR non-sec only."""
+        result: dict[int, np.ndarray] = {}
+        for ti in self._portfolio.instruments():
+            if FRTB_Risk_Class.CSR_NON_SEC not in ti.risk_classes:
+                continue
+            if ti.csr_bucket is None:
+                raise ValueError(
+                    f"Instrument '{ti.name}' has CSR risk class but no csr_bucket set."
+                )
+            sign = 1 if ti.is_long else -1
+            raw  = self._csr_sens(ti)
+            arr  = result.setdefault(ti.csr_bucket, np.zeros(len(FRTB_CSR_VERTICES)))
+            arr += sign * assign_to_bucket(raw, FRTB_CSR_VERTICES)
+        return result
+
+    def csr_sec_delta(self) -> dict[int, np.ndarray]:
+        """CS01 at 5 CSR vertices per bucket — CSR securitisation only."""
+        result: dict[int, np.ndarray] = {}
+        for ti in self._portfolio.instruments():
+            if FRTB_Risk_Class.CSR_SEC not in ti.risk_classes:
                 continue
             if ti.csr_bucket is None:
                 raise ValueError(
