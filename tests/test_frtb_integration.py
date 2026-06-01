@@ -22,14 +22,11 @@ ql_mod   = pytest.importorskip("QuantLib",   reason="QuantLib not available")
 qre_mod  = pytest.importorskip("quant_risk", reason="quant-risk-engine not installed")
 
 import QuantLib as ql
-from quant_risk.instruments.bond    import Bond
-from quant_risk.instruments.swap    import IRSwap
-from quant_risk.instruments.option  import VanillaOption
-from quant_risk.instruments.cds     import (
-    CreditDefaultSwap, STANDARD_RECOVERY, STANDARD_COUPON_IG, STANDARD_COUPON_HY
+from quant_risk import (
+    Bond, IRSwap, FXForward, VanillaOption,
+    CreditDefaultSwap, STANDARD_RECOVERY, STANDARD_COUPON_IG, STANDARD_COUPON_HY,
+    ArrayCurve,
 )
-from quant_risk.instruments.fx_forward import FXForward
-from quant_risk.curves.array_curve import ArrayCurve
 
 from banking_risk.frtb.portfolio import (
     Trading_Instrument, Standard_Trading_Portfolio, FRTB_Risk_Class,
@@ -283,6 +280,80 @@ class TestSensitivityEngineIntegration:
         assert 'EURUSD' in fx
         assert math.isfinite(fx['EURUSD'])
 
+    def test_equity_vega_nonzero_for_option(self, eur_curve):
+        option = VanillaOption(
+            spot=100.0, strike=100.0, expiry_date=EXPIRY_1Y,
+            valuation_date=TODAY, sigma=0.20, option_type='call',
+            notional_=500_000.0, currency_='EUR', underlying='SPX',
+        )
+        portfolio = Standard_Trading_Portfolio([
+            Trading_Instrument(
+                'SPX_CALL', 'EUR', frozenset({FRTB_Risk_Class.EQUITY}),
+                option, is_long=True, equity_bucket=5, is_linear=False,
+            )
+        ])
+        engine = FRTB_Sensitivity_Engine(portfolio, eur_curve)
+        vega   = engine.equity_vega()
+        assert 5 in vega
+        assert vega[5].sum() != pytest.approx(0.0)
+
+    def test_equity_vega_assigned_to_correct_expiry_vertex(self, eur_curve):
+        # 1Y option → should land in the 1Y expiry vertex (index 1)
+        option = VanillaOption(
+            spot=100.0, strike=100.0, expiry_date=EXPIRY_1Y,
+            valuation_date=TODAY, sigma=0.20, option_type='call',
+            notional_=500_000.0, currency_='EUR', underlying='SPX',
+        )
+        portfolio = Standard_Trading_Portfolio([
+            Trading_Instrument(
+                'SPX_1Y', 'EUR', frozenset({FRTB_Risk_Class.EQUITY}),
+                option, is_long=True, equity_bucket=5, is_linear=False,
+            )
+        ])
+        engine = FRTB_Sensitivity_Engine(portfolio, eur_curve)
+        vega   = engine.equity_vega()
+        from banking_risk.frtb.vertex_mapping import FRTB_EQUITY_VEGA_VERTICES
+        nearest_idx = int(
+            __import__('numpy').argmin(
+                __import__('numpy').abs(
+                    __import__('numpy').array(FRTB_EQUITY_VEGA_VERTICES) - 1.0
+                )
+            )
+        )
+        assert vega[5][nearest_idx] != pytest.approx(0.0)
+
+    def test_equity_vega_short_negates(self, eur_curve):
+        option = VanillaOption(
+            spot=100.0, strike=100.0, expiry_date=EXPIRY_1Y,
+            valuation_date=TODAY, sigma=0.20, option_type='call',
+            notional_=500_000.0, currency_='EUR', underlying='SPX',
+        )
+        long_p = Standard_Trading_Portfolio([
+            Trading_Instrument('O', 'EUR', frozenset({FRTB_Risk_Class.EQUITY}),
+                               option, is_long=True,  equity_bucket=5, is_linear=False)
+        ])
+        short_p = Standard_Trading_Portfolio([
+            Trading_Instrument('O', 'EUR', frozenset({FRTB_Risk_Class.EQUITY}),
+                               option, is_long=False, equity_bucket=5, is_linear=False)
+        ])
+        vega_long  = FRTB_Sensitivity_Engine(long_p,  eur_curve).equity_vega()[5]
+        vega_short = FRTB_Sensitivity_Engine(short_p, eur_curve).equity_vega()[5]
+        import numpy as np
+        np.testing.assert_allclose(vega_long, -vega_short, rtol=1e-9)
+
+    def test_linear_instrument_produces_no_vega(self, eur_curve):
+        bond = Bond(
+            isin='NOVEGA', face_value=1_000_000.0, coupon_rate=0.035,
+            issue_date='2024-06-01', maturity_date='2029-06-01',
+        )
+        portfolio = Standard_Trading_Portfolio([
+            Trading_Instrument('B', 'EUR', frozenset({FRTB_Risk_Class.GIRR}),
+                               bond, is_long=True, is_linear=True)
+        ])
+        engine = FRTB_Sensitivity_Engine(portfolio, eur_curve)
+        assert engine.girr_vega()   == {}
+        assert engine.equity_vega() == {}
+
     def test_short_position_negates_sensitivity(self, eur_curve):
         bond = Bond(
             isin='SHORT1', face_value=1_000_000.0, coupon_rate=0.035,
@@ -297,6 +368,64 @@ class TestSensitivityEngineIntegration:
         e_long  = FRTB_Sensitivity_Engine(long_p,  eur_curve).girr_delta()
         e_short = FRTB_Sensitivity_Engine(short_p, eur_curve).girr_delta()
         np.testing.assert_allclose(e_long['EUR'], -e_short['EUR'], rtol=1e-9)
+
+
+class TestCurvatureIntegration:
+
+    def _option_portfolio(self, eur_curve):
+        option = VanillaOption(
+            spot=100.0, strike=100.0, expiry_date=EXPIRY_1Y,
+            valuation_date=TODAY, sigma=0.20, option_type='call',
+            notional_=1_000_000.0, currency_='EUR', underlying='SPX',
+        )
+        return Standard_Trading_Portfolio([
+            Trading_Instrument(
+                'SPX_CALL', 'EUR', frozenset({FRTB_Risk_Class.GIRR}),
+                option, is_long=True, is_linear=False,
+            )
+        ])
+
+    def test_girr_curvature_returns_dicts(self, eur_curve):
+        engine = FRTB_Sensitivity_Engine(
+            self._option_portfolio(eur_curve), eur_curve
+        )
+        cvr_up, cvr_dn = engine.girr_curvature()
+        assert isinstance(cvr_up, dict)
+        assert isinstance(cvr_dn, dict)
+
+    def test_girr_curvature_nonzero_for_option(self, eur_curve):
+        engine = FRTB_Sensitivity_Engine(
+            self._option_portfolio(eur_curve), eur_curve
+        )
+        cvr_up, cvr_dn = engine.girr_curvature()
+        assert 'EUR' in cvr_up
+        # option has convexity — CVR should be non-zero
+        assert cvr_up['EUR'] != pytest.approx(0.0) or cvr_dn['EUR'] != pytest.approx(0.0)
+
+    def test_linear_instrument_zero_curvature(self, eur_curve):
+        bond = Bond(
+            isin='NOCVR', face_value=1_000_000.0, coupon_rate=0.035,
+            issue_date='2024-06-01', maturity_date='2029-06-01',
+        )
+        portfolio = Standard_Trading_Portfolio([
+            Trading_Instrument('B', 'EUR', frozenset({FRTB_Risk_Class.GIRR}),
+                               bond, is_long=True, is_linear=True)
+        ])
+        cvr_up, cvr_dn = FRTB_Sensitivity_Engine(portfolio, eur_curve).girr_curvature()
+        assert cvr_up == {}
+        assert cvr_dn == {}
+
+    def test_bumped_at_leaves_original_unchanged(self, eur_curve):
+        rate_before = eur_curve.zero_rate(5.0)
+        _bumped     = eur_curve.bumped_at(5.0, 0.0001)
+        assert eur_curve.zero_rate(5.0) == pytest.approx(rate_before)
+
+    def test_bumped_at_shifts_correct_vertex(self, eur_curve):
+        bumped = eur_curve.bumped_at(5.0, 0.0001)
+        assert bumped.zero_rate(5.0) == pytest.approx(
+            eur_curve.zero_rate(5.0) + 0.0001, rel=1e-6
+        )
+        assert bumped.zero_rate(1.0) == pytest.approx(eur_curve.zero_rate(1.0), rel=1e-6)
 
 
 class TestFRTBSAIntegration:
