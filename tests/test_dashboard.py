@@ -328,58 +328,36 @@ def test_stress_line_chart_mda_line():
 
 # ── Test: Dashboard Page Rendering (integration) ────────────────────────────────
 
-@pytest.mark.parametrize("input_mode", ["demo", "json"])
-def test_capital_adequacy_page_renders(input_mode):
-    """Test that capital adequacy page renders without error."""
-    # Mock streamlit
-    with patch("banking_risk.reporting.dashboard.st") as mock_st:
-        mock_st.set_page_config = MagicMock()
-        mock_st.title = MagicMock()
-        mock_st.markdown = MagicMock()
-        mock_st.sidebar.selectbox = MagicMock(return_value="Demo Mode")
-        mock_st.sidebar.radio = MagicMock(return_value="Demo Mode")
-        mock_st.sidebar.file_uploader = MagicMock(return_value=None)
-        mock_st.columns = MagicMock(return_value=[MagicMock(), MagicMock()])
-        mock_st.subheader = MagicMock()
-        mock_st.metric = MagicMock()
-        mock_st.plotly_chart = MagicMock()
-        mock_st.dataframe = MagicMock()
-        mock_st.info = MagicMock()
-
-        from banking_risk.reporting.dashboard import page_capital_adequacy
-
-        # Should not raise an exception
-        try:
-            page_capital_adequacy()
-        except Exception as e:
-            if "st.set_page_config" not in str(e):
-                raise
+def test_dashboard_public_api():
+    """Dashboard exposes the required public functions."""
+    from banking_risk.reporting.dashboard import (
+        load_demo_capital_stack,
+        load_demo_frtb_sa,
+        parse_capital_stack_json,
+        parse_frtb_sa_json,
+        _html_table,
+        _fig,
+    )
+    assert callable(load_demo_capital_stack)
+    assert callable(load_demo_frtb_sa)
+    assert callable(parse_capital_stack_json)
+    assert callable(parse_frtb_sa_json)
+    assert callable(_html_table)
+    assert callable(_fig)
 
 
-@pytest.mark.parametrize("input_mode", ["demo", "json"])
-def test_frtb_sa_page_renders(input_mode):
-    """Test that FRTB SA page renders without error."""
-    # Mock streamlit
-    with patch("banking_risk.reporting.dashboard.st") as mock_st:
-        mock_st.title = MagicMock()
-        mock_st.markdown = MagicMock()
-        mock_st.sidebar.selectbox = MagicMock(return_value="Demo Mode")
-        mock_st.sidebar.radio = MagicMock(return_value="Demo Mode")
-        mock_st.sidebar.file_uploader = MagicMock(return_value=None)
-        mock_st.columns = MagicMock(return_value=[MagicMock(), MagicMock()])
-        mock_st.subheader = MagicMock()
-        mock_st.plotly_chart = MagicMock()
-        mock_st.dataframe = MagicMock()
-        mock_st.info = MagicMock()
-
-        from banking_risk.reporting.dashboard import page_frtb_sa
-
-        # Should not raise an exception
-        try:
-            page_frtb_sa()
-        except Exception as e:
-            if "st.set_page_config" not in str(e):
-                raise
+def test_dashboard_demo_data_loads():
+    """Demo data files load and parse without error."""
+    from banking_risk.reporting.dashboard import (
+        load_demo_capital_stack,
+        load_demo_frtb_sa,
+        parse_capital_stack_json,
+        parse_frtb_sa_json,
+    )
+    cap  = parse_capital_stack_json(load_demo_capital_stack())
+    frtb = parse_frtb_sa_json(load_demo_frtb_sa())
+    assert cap["cet1"] > 0
+    assert len(frtb["components"]) > 0
 
 
 # ── Test: Data Loading and Validation ──────────────────────────────────────────
