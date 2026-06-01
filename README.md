@@ -18,10 +18,6 @@ All curve construction, instrument pricing, scenario simulation and risk sensiti
 
 <small>
 
-| Module | Regulation |
-|---|---|
-
-
 | Module     | Regulatory reference                    |
 | ---------- | --------------------------------------- |
 | `irrbb/*`  | EBA/RTS/2022/10                         |
@@ -35,9 +31,6 @@ All curve construction, instrument pricing, scenario simulation and risk sensiti
 **Approach**: SA for FRTB and IRRBB. Implements CRR3 prescribed 
 vertex grids, risk class bucketing, within-bucket netting, 
 correlation matrices, and capital K/S computation. Regulatory features: curvature via full repricing, collateral haircut LGD, EVE/NII repricing gaps per EBA/RTS/2022/10.
-
-
-
 
 </small>
 
