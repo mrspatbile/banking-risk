@@ -238,10 +238,14 @@ class FRTB_SA:
              for ccy, arr in girr_vega_flat.items()}
         ) if girr_vega_flat else None
 
+        girr_cvr_up, girr_cvr_dn = engine.girr_curvature()
+        girr_curv = SA_GIRR_Curvature_Calculator().compute(girr_cvr_up, girr_cvr_dn) \
+            if girr_cvr_up else None
+
         self._girr = Risk_Class_View(
             delta=girr_delta,
             vega=girr_vega,
-            curvature=None,   # requires QRE-2 + QRE-3
+            curvature=girr_curv,
         )
 
         # ── CSR ───────────────────────────────────────────────────────────────

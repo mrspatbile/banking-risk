@@ -197,14 +197,12 @@ class FRTB_Sensitivity_Engine:
             arr[e_idx] += vega
         return result
 
-    # ── Curvature (requires QRE-2 + QRE-3) ───────────────────────────────────
+    # ── Curvature ─────────────────────────────────────────────────────────────
 
     def girr_curvature(self) -> tuple[dict[str, float], dict[str, float]]:
         """(cvr_up, cvr_dn) per currency — inputs for SA_GIRR_Curvature_Calculator.
 
         Non-linear instruments only.
-        Requires QRE-2: ArrayCurve.bumped_at(tenor, amount).
-        Requires QRE-3: instrument.npv(curve) -> float.
 
         CVR formula (CRR3 Art. 325e):
             CVR_k^+ = -(V(r + RW_k) - V(r) - RW_k × s_k)
