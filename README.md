@@ -165,7 +165,7 @@ notebooks/
 │   └── reporting.py
 │
 📁 tests/
-    └── test_*.py  (564 tests)
+    └── test_*.py  (602 tests)
 
  ```
 ---
