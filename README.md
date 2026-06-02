@@ -1,9 +1,6 @@
 ![Python](https://img.shields.io/badge/Python-3.13-blue?logo=python&logoColor=white)
-
 [![CRR3](https://img.shields.io/badge/Reg-CRR3-orange)](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32024R1623)
-
 [![CRD VI](https://img.shields.io/badge/reg-CRD_VI-purple)](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32024L1619)
-
 ![Tests](https://github.com/mrspatbile/banking-risk/actions/workflows/test.yml/badge.svg)
 
 
