@@ -13,6 +13,7 @@
   - Total Capital Ratio (min 8.0%)
   - Leverage Ratio (min 3.0%)
 
+
 - **Traffic Light**: Five signals
   - Pillar 1 compliance
   - Countercyclical buffer (CCB)
@@ -24,7 +25,7 @@
 
 - **RWA Table**: Risk-weighted assets by component (FRTB, Credit, OpRisk)
 
-- **Stress Testing Chart**: Line chart showing CET1 ratio across three scenarios
+- **Stress Testing Chart**: Bar chart showing CET1 ratio across three scenarios
   - Baseline
   - Adverse
   - Severely Adverse
@@ -39,9 +40,6 @@
 
 - **CRM Total**: Large highlight of total capital requirement
 
-- **Risk Class Selector**: Dropdown to filter detailed table view
-
-- **Detail Table**: Drill-down by risk class or summary view
 
 ### Screenshots to populate after first run
 

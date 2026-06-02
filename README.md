@@ -2,7 +2,7 @@
 ![CRR3](https://img.shields.io/badge/Reg-CRR3-orange)
 ![CRD](https://img.shields.io/badge/reg-CRD_VI-purple)
 ![Tests](https://github.com/mrspatbile/banking-risk/actions/workflows/test.yml/badge.svg)
-![Tests passing](https://img.shields.io/badge/tests-564%20passing-brightgreen)
+
 
 # banking-risk
 
@@ -104,6 +104,7 @@ notebooks/
 ![Capital Adequacy Dashboard](docs/screenshots/dashboard-k-req.png)
 
 ![FRTB SA Dashboard](docs/screenshots/dashboard-frtb.png)
+
 
 ---
 
