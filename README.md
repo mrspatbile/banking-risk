@@ -35,6 +35,18 @@ correlation matrices, and capital K/S computation. Regulatory features: curvatur
 </small>
 
 ---
+## Dashboards
+
+**Capital Adequacy** — KPI ratios, capital stack, RWA composition, regulatory compliance, stress test scenarios.
+
+![Capital Adequacy Dashboard](docs/screenshots/dashboard-k-req.png)
+
+**FRTB SA** — CRM total, capital by risk class, delta/vega/curvature composition, risk class detail.
+
+![FRTB SA Dashboard](docs/screenshots/dashboard-frtb.png)
+
+
+---
 
 ## Stack
 
@@ -99,14 +111,7 @@ notebooks/
 
 ---
 
-## Dashboards
 
-![Capital Adequacy Dashboard](docs/screenshots/dashboard-k-req.png)
-
-![FRTB SA Dashboard](docs/screenshots/dashboard-frtb.png)
-
-
----
 
 ## Project layout
 
