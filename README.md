@@ -1,22 +1,22 @@
 ![Python](https://img.shields.io/badge/Python-3.13-blue?logo=python&logoColor=white)
-![CRR3](https://img.shields.io/badge/Reg-CRR3-orange)
-![CRD](https://img.shields.io/badge/reg-CRD_VI-purple)
+
+[![CRR3](https://img.shields.io/badge/Reg-CRR3-orange)](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32024R1623)
+
+[![CRD VI](https://img.shields.io/badge/reg-CRD_VI-purple)](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32024L1619)
+
 ![Tests](https://github.com/mrspatbile/banking-risk/actions/workflows/test.yml/badge.svg)
 
 
 # banking-risk
 
 
-This repository implements **regulatory risk frameworks** as executable logic, translating IRRBB, FRTB, CSRBB, and ICAAP requirements into computation, aggregation, decomposition, and reporting layers.
+**Banking-risk** translates CRR3, CRD VI, and EBA regulatory requirements into executable Python, covering IRRBB, FRTB SA, CSRBB, ICAAP, liquidity ratios, and credit risk capital. The computation layer is fully separated into [quant-risk-engine](https://github.com/mrspatbile/quant-risk-engine), which handles curve construction, instrument pricing, and sensitivities. This repo is the regulatory layer: bucketing, aggregation, capital computation, and reporting, built against the actual regulatory texts.
 
-All curve construction, instrument pricing, scenario simulation and risk sensitivities are delegated to [quant-risk-engine](https://github.com/mrspatbile/quant-risk-engine), which provides the underlying quantitative primitives used across regulatory models.
-
+![Capital Adequacy Dashboard](docs/screenshots/dashboard-k-req.png)
 
 ---
 
 ## Regulatory scope
-
-<small>
 
 | Module     | Regulatory reference                    |
 | ---------- | --------------------------------------- |
@@ -28,23 +28,9 @@ All curve construction, instrument pricing, scenario simulation and risk sensiti
 | `ilaap.py` | EBA/GL/2021/01 + ECB ILAAP Guide |
 | `credit_risk/` |  CRR Art. 153 (IRB formula), Art. 163 (PD), Art. 228–230 (LGD)                   | 
 
-**Approach**: SA for FRTB and IRRBB. Implements CRR3 prescribed 
-vertex grids, risk class bucketing, within-bucket netting, 
-correlation matrices, and capital K/S computation. Regulatory features: curvature via full repricing, collateral haircut LGD, EVE/NII repricing gaps per EBA/RTS/2022/10.
+## Approach
 
-</small>
-
----
-## Dashboards
-
-**Capital Adequacy** — KPI ratios, capital stack, RWA composition, regulatory compliance, stress test scenarios.
-
-![Capital Adequacy Dashboard](docs/screenshots/dashboard-k-req.png)
-
-**FRTB SA** — CRM total, capital by risk class, delta/vega/curvature composition, risk class detail.
-
-![FRTB SA Dashboard](docs/screenshots/dashboard-frtb.png)
-
+All modules implement the Standardised Approach. FRTB SA follows CRR3 prescribed vertex grids, risk class bucketing, within-bucket netting, correlation matrices, and capital computation across delta, vega, and curvature. IRRBB covers EVE and NII repricing gaps per EBA/RTS/2022/10, with the six prescribed parallel and non-parallel shock scenarios. LGD applies collateral haircuts per CRR Art. 228-230.
 
 ---
 
@@ -111,8 +97,6 @@ notebooks/
 
 ---
 
-
-
 ## Project layout
 
 ```
@@ -164,11 +148,7 @@ notebooks/
 │
 ├── 📁 reporting/
 │   ├── dashboard.py
-│   ├── charts.py
-│   └── __init__.py
-│
-├── 📁 utils/
-│   └── reporting.py
+│   └── charts.py
 │
 📁 tests/
     └── test_*.py  (602 tests)
@@ -182,5 +162,7 @@ notebooks/
 pytest tests/ -v
 ```
 
-CI runs on every push and pull request to `main` via GitHub Actions (`.github/workflows/test.yml`).
+CI runs on every push and pull request to `main` via GitHub Actions (`.github/workflows/test.yml`). Current suite: 602 tests.
+
+
 
